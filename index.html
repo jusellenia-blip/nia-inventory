@@ -168,7 +168,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <script>
-  // Replace this placeholder string with your exact Google Apps Script URL ending in /exec
+  // Updated with your explicit active API tracking reference deployment link
   const API_URL = "https://script.google.com/macros/s/AKfycbztoxVBkGZ7x_x5YpzlLlLX9mQLr-Z9Xnwdk10QaWvZYdqdNuefPMyVOy9XTebjWwmA/exec";
 
   var globalStatusChart = null;
@@ -229,70 +229,4 @@
     var selStat = document.getElementById('filterStatus').value;
     var selYear = document.getElementById('filterYear').value;
 
-    var filtered = fullDataset.filter(item => {
-      var matchCategory = !selCat || item.category === selCat;
-      var matchLocation = !selLoc || item.location === selLoc;
-      var matchStatus   = !selStat || item.status === selStat;
-      var matchYear     = !selYear || item.acqYear === selYear;
-      return matchCategory && matchLocation && matchStatus && matchYear;
-    });
-
-    renderDashboardOutput(filtered);
-  }
-
-  function renderDashboardOutput(data) {
-    var tbody = document.getElementById('inventoryBody');
-    tbody.innerHTML = '';
-    
-    var statusCounts = {};
-    document.getElementById('totalAssetCountBadge').innerHTML = "Total: " + data.length;
-
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="11" class="center-align font-weight-bold grey-text" style="padding: 30px;">No inventory elements fit those matched criteria filters.</td></tr>';
-      updateStatusChart({}, 0);
-      calculateKPIMetrics({});
-      return;
-    }
-
-    data.forEach(function(item) {
-      var statusClean = "UNKNOWN";
-      if(item.status) {
-        statusClean = item.status.toString().toUpperCase().trim();
-        statusCounts[statusClean] = (statusCounts[statusClean] || 0) + 1;
-      }
-
-      var statusBadgeClass = "status-default";
-      if (statusClean === "A1") statusBadgeClass = "status-a1";
-      else if (statusClean === "A2") statusBadgeClass = "status-a2";
-      else if (statusClean === "A3") statusBadgeClass = "status-a3";
-      else if (statusClean === "R")  statusBadgeClass = "status-r";
-
-      var catClass = "bg-dynamic";
-      if (item.category === "Heavy Equipment") catClass = "bg-heavy";
-      if (item.category === "Light Equipment") catClass = "bg-light";
-      
-      var shortCatName = item.category.replace(" Equipment", "");
-      var engineString = `<b>Make:</b> ${item.engineMake || '-'}<br><b>Model:</b> ${item.engineModel || '-'}<br><b>Ser:</b> ${item.engineSerNo || '-'}`;
-      
-      var row = '<tr class="highlight-row">' +
-        '<td><span class="badge-cat ' + catClass + '">' + shortCatName + '</span></td>' +
-        '<td><b>' + item.equipmentType + '</b></td>' +
-        '<td>' + item.propNo + '</td>' +
-        '<td>' + (item.plateNo && item.plateNo !== '-' ? item.plateNo : '<span class="grey-text">-</span>') + '</td>' +
-        '<td><span class="badge-status ' + statusBadgeClass + '">' + statusClean + '</span></td>' +
-        '<td>' + (item.modelNo && item.modelNo !== '-' ? item.modelNo : '<span class="grey-text">-</span>') + '</td>' +
-        '<td>' + item.unitSerNo + '</td>' +
-        '<td class="left-align" style="line-height: 1.4;">' + engineString + '</td>' +
-        '<td>' + item.acqDate + '</td>' +
-        '<td>' + (item.acqCost || '-') + '</td>' +
-        '<td><span class="loc-marker">' + item.location + '</span></td>' +
-      '</tr>';
-      tbody.innerHTML += row;
-    });
-
-    updateStatusChart(statusCounts, data.length);
-    calculateKPIMetrics(statusCounts);
-  }
-
-  function searchTableLocal() {
     var
