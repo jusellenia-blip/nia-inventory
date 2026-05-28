@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NIA Equipment Inventory Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+  <style>
+    body { padding: 15px; background-color: #f4f6f9; font-family: sans-serif; }
+    .container-fluid { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin: 0 auto; width: 98%; }
+    .header-banner { background-color: #0d47a1; color: white; padding: 15px 25px; border-radius: 6px 6px 0 0; margin: -25px -25px 25px -25px; }
+    .header-banner h5 { margin: 0; font-weight: bold; }
+    .header-banner p { margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.8; }
+    .filter-card { background: #fcfcfc; padding: 20px 15px 10px 15px; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 20px; min-height: 236px; }
+    .input-field { margin-top: 5px !important; margin-bottom: 15px !important; position: relative; }
+    .input-field > label { position: absolute; top: -18px !important; left: 0; font-size: 0.85rem !important; transform: none !important; color: #111111 !important; font-weight: bold; }
+    .analytics-panel { min-height: 236px; margin-bottom: 20px; }
+    .chart-container { position: relative; height: 145px; width: 100%; max-width: 400px; margin: 0 auto; }
+    .loader { display: block; margin: 30px 0; }
+    .table-control-strip { display: flex; justify-content: space-between; align-items: center; background-color: #f5f5f5; padding: 10px 15px; border: 1px solid #e0e0e0; border-bottom: none; border-radius: 4px 4px 0 0; margin-top: 10px; }
+    .search-wrapper { position: relative; width: 300px; margin: 0; }
+    .search-wrapper input { margin: 0 !important; padding: 0 10px 0 36px !important; height: 36px !important; background: #ffffff !important; border: 1px solid #cccccc !important; border-radius: 4px !important; box-sizing: border-box !important; font-size: 13px; }
+    .search-wrapper input:focus { border-bottom: 1px solid #1565c0 !important; box-shadow: 0 1px 0 0 #1565c0 !important; }
+    .search-wrapper i { position: absolute; top: 6px; left: 8px; color: #757575; }
+    .table-card { border: 1px solid #e0e0e0; border-radius: 0 0 4px 4px; background: #fff; overflow: hidden; }
+    table { font-size: 12px; border-collapse: collapse; }
+    th { background-color: #1565c0; color: #ffffff !important; font-weight: 600; text-transform: uppercase; font-size: 11px; padding: 12px 6px; }
+    td { padding: 10px 6px; vertical-align: middle; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    tr.highlight-row:hover { background-color: #e3f2fd !important; transition: background-color 0.15s ease; }
+    .badge-cat { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 10px; color: white; display: inline-block; text-align: center; min-width: 80px; text-transform: uppercase; }
+    .bg-dynamic { background-color: #455a64; }
+    .bg-heavy { background-color: #e65100; }
+    .bg-light { background-color: #00838f; }
+    .badge-status { padding: 3px 10px; border-radius: 12px; font-weight: bold; font-size: 11px; color: white; display: inline-block; min-width: 48px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .status-a1 { background-color: #1565c0; }
+    .status-a2 { background-color: #2e7d32; }
+    .status-a3 { background-color: #c62828; }
+    .status-r  { background-color: #f9a825; }
+    .status-default { background-color: #757575; }
+    .kpi-title { font-size: 0.85rem; text-transform: uppercase; color: #555; font-weight: bold; margin: 0; }
+    .kpi-value { font-size: 1.8rem; font-weight: bold; margin: 5px 0 0 0; color: #111; }
+    .kpi-card { padding: 12px !important; border: 1px solid #e0e0e0; box-shadow: none !important; border-radius: 6px; margin-bottom: 15px !important; }
+    .loc-marker { background-color: #fff59d; padding: 3px 6px; border-radius: 4px; font-weight: 500; border: 1px solid #fbc02d; color: #424242; display: inline-block; }
+    .summary-addon { font-size: 0.8rem; color: #424242; font-weight: bold; background: #e0e0e0; padding: 2px 8px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid">
+  <div class="header-banner">
+    <h5>National Irrigation Administration (Regional Office No. III)</h5>
+    <p>PAMPANGA BATAAN IMO — Equipment Inventory Interactive Dashboard</p>
+  </div>
+  
+  <div class="row" style="margin-bottom: 5px;">
+    <div class="col s12 l7">
+      <div class="filter-card">
+        <div class="row" style="margin-bottom: 0;">
+          <div class="input-field col s12 m6">
+            <select id="filterCategory" onchange="localFilterAndRender()">
+              <option value="" selected>All Categories</option>
+            </select>
+            <label>Category</label>
+          </div>
+
+          <div class="input-field col s12 m6">
+            <select id="filterLocation" onchange="localFilterAndRender()">
+              <option value="" selected>All Locations</option>
+            </select>
+            <label>Location</label>
+          </div>
+
+          <div class="input-field col s12 m6">
+            <select id="filterStatus" onchange="localFilterAndRender()">
+              <option value="" selected>All Statuses</option>
+            </select>
+            <label>Status Code</label>
+          </div>
+
+          <div class="input-field col s12 m6">
+            <select id="filterYear" onchange="localFilterAndRender()">
+              <option value="" selected>All Years</option>
+            </select>
+            <label>Acquisition Year</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col s12 l5">
+      <div class="card-panel white analytics-panel" style="padding: 15px; border: 1px solid #e0e0e0; box-shadow: none; margin-top: 0; margin-bottom: 0;">
+        <div class="row" style="margin-bottom: 10px;">
+          <div class="col s6">
+            <div class="white center-align" id="cardOperability" style="border-left: 5px solid #ccc; padding: 2px 5px;">
+              <p class="kpi-title">Operability</p>
+              <p class="kpi-value" id="valOperability" style="font-size: 1.6rem;">0.0%</p>
+            </div>
+          </div>
+          <div class="col s6">
+            <div class="white center-align" id="cardReliability" style="border-left: 5px solid #ccc; padding: 2px 5px;">
+              <p class="kpi-title">Reliability</p>
+              <p class="kpi-value" id="valReliability" style="font-size: 1.6rem;">0.0%</p>
+            </div>
+          </div>
+        </div>
+        
+        <hr style="border:0; border-top: 1px solid #e0e0e0; margin: 10px 0;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+          <span style="font-weight: bold; color: #1565c0; font-size: 0.85rem;">Status Allocation Breakdown</span>
+          <span id="totalAssetCountBadge" class="summary-addon">Total: 0</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="statusDoughnutChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading" class="loader center-align">
+    <div class="preloader-wrapper active">
+      <div class="spinner-layer spinner-blue-only">
+        <div class="circle-clipper left"><div class="circle"></div></div>
+        <div class="gap-patch"><div class="circle"></div></div>
+        <div class="circle-clipper right"><div class="circle"></div></div>
+      </div>
+    </div>
+    <p style="margin-top:10px; color:#666;">Synchronizing active data streams...</p>
+  </div>
+
+  <div class="table-control-strip">
+    <div class="search-wrapper">
+      <i class="material-icons">search</i>
+      <input type="text" id="tableSearchInput" onkeyup="searchTableLocal()" placeholder="Quick filter current table entries...">
+    </div>
+    <span style="font-size: 11px; color:#757575; font-weight: bold; text-transform: uppercase;">Inventory Roster View</span>
+  </div>
+
+  <div id="tableContainer" class="responsive-table table-card">
+    <table class="striped bordered centered">
+      <thead>
+        <tr>
+          <th style="width: 9%;">Category</th>
+          <th style="width: 13%;">Equipment Type</th>
+          <th style="width: 8%;">Prop. No.</th>
+          <th style="width: 7%;">Plate No.</th>
+          <th style="width: 6%;">Status</th>
+          <th style="width: 9%;">Model No.</th>
+          <th style="width: 9%;">Unit Ser. No.</th>
+          <th style="width: 16%;">Engine Details</th>
+          <th style="width: 8%;">Acq. Date</th>
+          <th style="width: 10%;">Acq. Cost</th>
+          <th style="width: 15%;">Location</th>
+        </tr>
+      </thead>
+      <tbody id="inventoryBody">
+        <tr>
+          <td colspan="11" class="center-align grey-text">Establishing web secure synchronization parameters...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script>
+  // Replace this placeholder string with your exact Google Apps Script URL ending in /exec
+  const API_URL = "https://script.google.com/macros/s/AKfycbymyUJNu9saU_FbZPppa5xbbfWUiIioJLOGpTDYSdIBpQKO8j8vImTp5sGgIA5PQvEa/exec";
+
+  var globalStatusChart = null;
+  var fullDataset = []; 
+
+  document.addEventListener('DOMContentLoaded', function() {
+    M.FormSelect.init(document.querySelectorAll('select'));
+    fetchDashboardData();
+  });
+
+  function fetchDashboardData() {
+    // Generate a unique dynamic callback name to implement secure JSONP data delivery
+    const callbackName = 'jsonpCallback_' + Math.round(100000 * Math.random());
+    
+    window[callbackName] = function(data) {
+      fullDataset = data.equipmentData;
+      setupDropdownFilters(data.filterOptions);
+      document.getElementById('loading').style.display = 'none';
+      localFilterAndRender();
+      
+      // Post-load layout component script cleanup
+      document.getElementById(callbackName).remove();
+      delete window[callbackName];
+    };
+
+    const script = document.createElement('script');
+    script.id = callbackName;
+    script.src = API_URL + (API_URL.includes('?') ? '&' : '?') + 'callback=' + callbackName;
+    
+    script.onerror = function() {
+      console.error("Data matrix mapping link breakdown.");
+      document.getElementById('inventoryBody').innerHTML = 
+        `<tr><td colspan="11" class="center-align red-text font-weight-bold">Security Block: Direct JSON handshakes failed. Verify deployment properties match version rules.</td></tr>`;
+    };
+
+    document.body.appendChild(script);
+  }
+
+  function setupDropdownFilters(options) {
+    var catSelect = document.getElementById('filterCategory');
+    var locSelect = document.getElementById('filterLocation');
+    var statSelect = document.getElementById('filterStatus');
+    var yearSelect = document.getElementById('filterYear');
+    
+    options.categories.forEach(item => catSelect.options.add(new Option(item, item)));
+    options.locations.forEach(item => locSelect.options.add(new Option(item, item)));
+    options.statuses.forEach(item => statSelect.options.add(new Option(item, item)));
+    options.years.forEach(item => yearSelect.options.add(new Option(item, item)));
+    
+    M.FormSelect.init(document.querySelectorAll('select'));
+  }
+
+  function localFilterAndRender() {
+    document.getElementById('tableSearchInput').value = ''; 
+    
+    var selCat = document.getElementById('filterCategory').value;
+    var selLoc = document.getElementById('filterLocation').value;
+    var selStat = document.getElementById('filterStatus').value;
+    var selYear = document.getElementById('filterYear').value;
+
+    var filtered = fullDataset.filter(item => {
+      var matchCategory = !selCat || item.category === selCat;
+      var matchLocation = !selLoc || item.location === selLoc;
+      var matchStatus   = !selStat || item.status === selStat;
+      var matchYear     = !selYear || item.acqYear === selYear;
+      return matchCategory && matchLocation && matchStatus && matchYear;
+    });
+
+    renderDashboardOutput(filtered);
+  }
+
+  function renderDashboardOutput(data) {
+    var tbody = document.getElementById('inventoryBody');
+    tbody.innerHTML = '';
+    
+    var statusCounts = {};
+    document.getElementById('totalAssetCountBadge').innerHTML = "Total: " + data.length;
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="11" class="center-align font-weight-bold grey-text" style="padding: 30px;">No inventory elements fit those matched criteria filters.</td></tr>';
+      updateStatusChart({}, 0);
+      calculateKPIMetrics({});
+      return;
+    }
+
+    data.forEach(function(item) {
+      var statusClean = "UNKNOWN";
+      if(item.status) {
+        statusClean = item.status.toString().toUpperCase().trim();
+        statusCounts[statusClean] = (statusCounts[statusClean] || 0) + 1;
+      }
+
+      var statusBadgeClass = "status-default";
+      if (statusClean === "A1") statusBadgeClass = "status-a1";
+      else if (statusClean === "A2") statusBadgeClass = "status-a2";
+      else if (statusClean === "A3") statusBadgeClass = "status-a3";
+      else if (statusClean === "R")  statusBadgeClass = "status-r";
+
+      var catClass = "bg-dynamic";
+      if (item.category === "Heavy Equipment") catClass = "bg-heavy";
+      if (item.category === "Light Equipment") catClass = "bg-light";
+      
+      var shortCatName = item.category.replace(" Equipment", "");
+      var engineString = `<b>Make:</b> ${item.engineMake || '-'}<br><b>Model:</b> ${item.engineModel || '-'}<br><b>Ser:</b> ${item.engineSerNo || '-'}`;
+      
+      var row = '<tr class="highlight-row">' +
+        '<td><span class="badge-cat ' + catClass + '">' + shortCatName + '</span></td>' +
+        '<td><b>' + item.equipmentType + '</b></td>' +
+        '<td>' + item.propNo + '</td>' +
+        '<td>' + (item.plateNo && item.plateNo !== '-' ? item.plateNo : '<span class="grey-text">-</span>') + '</td>' +
+        '<td><span class="badge-status ' + statusBadgeClass + '">' + statusClean + '</span></td>' +
+        '<td>' + (item.modelNo && item.modelNo !== '-' ? item.modelNo : '<span class="grey-text">-</span>') + '</td>' +
+        '<td>' + item.unitSerNo + '</td>' +
+        '<td class="left-align" style="line-height: 1.4;">' + engineString + '</td>' +
+        '<td>' + item.acqDate + '</td>' +
+        '<td>' + (item.acqCost || '-') + '</td>' +
+        '<td><span class="loc-marker">' + item.location + '</span></td>' +
+      '</tr>';
+      tbody.innerHTML += row;
+    });
+
+    updateStatusChart(statusCounts, data.length);
+    calculateKPIMetrics(statusCounts);
+  }
+
+  function searchTableLocal() {
+    var
